@@ -63,7 +63,7 @@ Dashboard interaktif dibuat menggunakan Metabase, dengan visualisasi utama melip
 
 ## Prediksi Dropout Mahasiswa (Streamlit App)
 
-Link streamlit: https://bpds-2-cksoqrybkyiwn9n5pjyhma.streamlit.app
+Link streamlit: https://bpds-2-embpnqyiv2btf8hxvlikpt.streamlit.app/
 
 Aplikasi prediksi dibangun menggunakan Streamlit, memungkinkan staf institusi untuk:
 
