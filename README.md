@@ -28,7 +28,7 @@ Sumber data: [Dataset mahasiswa Jaya Jaya Institute (demografi, akademik, keuang
 Setup environment:
 
 ```text
-conda create -n jji_env python=3.10
+conda create -n jji_env python=3.11
 ```
 ```text
 conda activate jji_env
@@ -62,6 +62,8 @@ Dashboard interaktif dibuat menggunakan Metabase, dengan visualisasi utama melip
 - Bar chart: Distribusi Status Application_mode
 
 ## Prediksi Dropout Mahasiswa (Streamlit App)
+
+Link streamlit: https://bpds-2-cksoqrybkyiwn9n5pjyhma.streamlit.app
 
 Aplikasi prediksi dibangun menggunakan Streamlit, memungkinkan staf institusi untuk:
 

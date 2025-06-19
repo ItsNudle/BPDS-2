@@ -2,91 +2,125 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load model
-model = joblib.load("model.joblib")
+# Konfigurasi Halaman
+st.set_page_config(layout="centered", page_title="Prediksi DropOut Mahasiswa")
 
-st.set_page_config(page_title="Prediksi Dropout Mahasiswa", layout="centered")
-st.title("🎓 Prediksi Dropout Mahasiswa")
+# Memuat model
+@st.cache_resource
+def load_model():
+    return joblib.load('model.joblib')
 
-# Fungsi konversi manual kategori ke angka (sesuai dengan model)
-def encode_yes_no(value):
-    return 1 if value == 'Yes' else 0
+model = load_model()
 
-def encode_gender(value):
-    return 1 if value == 'Male' else 0
-
-def encode_marital_status(value):
-    mapping = {
-        'Single': 0,
-        'Married': 1,
-        'Divorced': 2,
-        'Widower': 3,
-        'Facto Union': 4,
-        'Legally Seperated': 5
-    }
-    return mapping.get(value, 0)
-
-# --- Input Form ---
-
-# Marital Status
-marital_status = st.selectbox("Marital Status", [
-    'Single', 'Married', 'Divorced', 'Widower', 'Facto Union', 'Legally Seperated'
-])
-marital_status_encoded = encode_marital_status(marital_status)
-
-application_mode = st.number_input("Application Mode (angka)", min_value=0)
-
-previous_grade = st.number_input("Previous Qualification Grade", min_value=0.0)
-admission_grade = st.number_input("Admission Grade", min_value=0.0)
-
-displaced = st.selectbox("Displaced", ["Yes", "No"])
-debtor = st.selectbox("Debtor", ["Yes", "No"])
-tuition_fees = st.selectbox("Tuition Fees Up-to-date", ["Yes", "No"])
-gender = st.selectbox("Gender", ["Male", "Female"])
-scholarship = st.selectbox("Scholarship Holder", ["Yes", "No"])
-
-age = st.number_input("Age at Enrollment", min_value=0)
-units_1st_enrolled = st.number_input("1st Sem: Units Enrolled", min_value=0)
-units_1st_approved = st.number_input("1st Sem: Units Approved", min_value=0)
-units_1st_grade = st.number_input("1st Sem: Grade", min_value=0.0)
-
-units_2nd_enrolled = st.number_input("2nd Sem: Units Enrolled", min_value=0)
-units_2nd_evaluated = st.number_input("2nd Sem: Units Evaluated", min_value=0)
-units_2nd_approved = st.number_input("2nd Sem: Units Approved", min_value=0)
-units_2nd_grade = st.number_input("2nd Sem: Grade", min_value=0.0)
-units_2nd_wo_eval = st.number_input("2nd Sem: Units Without Evaluation", min_value=0)
-
-# --- Encoding ---
-input_dict = {
-    'Marital_status': [marital_status_encoded],
-    'Application_mode': [application_mode],
-    'Previous_qualification_grade': [previous_grade],
-    'Admission_grade': [admission_grade],
-    'Displaced': [encode_yes_no(displaced)],
-    'Debtor': [encode_yes_no(debtor)],
-    'Tuition_fees_up_to_date': [encode_yes_no(tuition_fees)],
-    'Gender': [encode_gender(gender)],
-    'Scholarship_holder': [encode_yes_no(scholarship)],
-    'Age_at_enrollment': [age],
-    'Curricular_units_1st_sem_enrolled': [units_1st_enrolled],
-    'Curricular_units_1st_sem_approved': [units_1st_approved],
-    'Curricular_units_1st_sem_grade': [units_1st_grade],
-    'Curricular_units_2nd_sem_enrolled': [units_2nd_enrolled],
-    'Curricular_units_2nd_sem_evaluations': [units_2nd_evaluated],
-    'Curricular_units_2nd_sem_approved': [units_2nd_approved],
-    'Curricular_units_2nd_sem_grade': [units_2nd_grade],
-    'Curricular_units_2nd_sem_without_evaluations': [units_2nd_wo_eval]
+# Definisi input fitur
+features_definition = {
+    "Marital_status": {
+        "type": "selectbox",
+        "options": {"Single": 1, "Married": 2, "Widower": 3, "Divorced": 4, "Legally Separated": 5},
+        "default": 1,
+    },
+    "Application_mode": {
+        "type": "selectbox",
+        "options": {
+            "1 - General Contingent": 1, "2 - Ordinance No. 612/93": 2, "17 - 2nd Phase - General": 17,
+            "39 - Over 23 Years Old": 39
+        },
+        "default": 1,
+    },
+    "Previous_qualification_grade": {
+        "type": "number_input", "min_value": 0.0, "max_value": 200.0, "default": 140.0, "step": 0.1,
+    },
+    "Admission_grade": {
+        "type": "number_input", "min_value": 0.0, "max_value": 200.0, "default": 130.0, "step": 0.1,
+    },
+    "Displaced": {
+        "type": "selectbox", "options": {"Tidak": 0, "Ya": 1}, "default": 0
+    },
+    "Debtor": {
+        "type": "selectbox", "options": {"Tidak": 0, "Ya": 1}, "default": 0
+    },
+    "Tuition_fees_up_to_date": {
+        "type": "selectbox", "options": {"Tidak": 0, "Ya": 1}, "default": 1
+    },
+    "Gender": {
+        "type": "selectbox", "options": {"Perempuan": 0, "Laki-laki": 1}, "default": 1
+    },
+    "Scholarship_holder": {
+        "type": "selectbox", "options": {"Tidak": 0, "Ya": 1}, "default": 0
+    },
+    "Age_at_enrollment": {
+        "type": "number_input", "min_value": 15, "max_value": 90, "default": 18, "step": 1,
+    },
+    "Curricular_units_1st_sem_enrolled": {
+        "type": "number_input", "min_value": 0, "max_value": 100, "default": 6, "step": 1
+    },
+    "Curricular_units_1st_sem_approved": {
+        "type": "number_input", "min_value": 0, "max_value": 100, "default": 6, "step": 1
+    },
+    "Curricular_units_1st_sem_grade": {
+        "type": "number_input", "min_value": 0.0, "max_value": 20.0, "default": 12.0, "step": 0.1
+    },
+    "Curricular_units_2nd_sem_enrolled": {
+        "type": "number_input", "min_value": 0, "max_value": 100, "default": 6, "step": 1
+    },
+    "Curricular_units_2nd_sem_evaluations": {
+        "type": "number_input", "min_value": 0, "max_value": 20, "default": 6, "step": 1
+    },
+    "Curricular_units_2nd_sem_approved": {
+        "type": "number_input", "min_value": 0, "max_value": 100, "default": 6, "step": 1
+    },
+    "Curricular_units_2nd_sem_grade": {
+        "type": "number_input", "min_value": 0.0, "max_value": 20.0, "default": 12.0, "step": 0.1
+    },
+    "Curricular_units_2nd_sem_without_evaluations": {
+        "type": "number_input", "min_value": 0, "max_value": 100, "default": 0, "step": 1
+    },
 }
-input_df = pd.DataFrame(input_dict)
 
-# --- Prediksi ---
-if st.button("🔍 Prediksi"):
+feature_columns_order = list(features_definition.keys())
+
+# UI Prediksi Single Mahasiswa
+st.title("🎓 Prediksi DropOut Mahasiswa")
+
+input_data = {}
+cols = st.columns(2)
+col_idx = 0
+
+for feature, detail in features_definition.items():
+    with cols[col_idx % 2]:
+        if detail["type"] == "number_input":
+            input_data[feature] = st.number_input(
+                label=feature.replace("_", " "),
+                min_value=detail["min_value"],
+                max_value=detail["max_value"],
+                value=detail["default"],
+                step=detail["step"]
+            )
+        elif detail["type"] == "selectbox":
+            labels = list(detail["options"].keys())
+            default_label = next(k for k, v in detail["options"].items() if v == detail["default"])
+            selected = st.selectbox(
+                label=feature.replace("_", " "),
+                options=labels,
+                index=labels.index(default_label)
+            )
+            input_data[feature] = detail["options"][selected]
+    col_idx += 1
+
+if st.button("🔍 Prediksi Mahasiswa"):
+    input_df = pd.DataFrame([input_data])[feature_columns_order]
     prediction = model.predict(input_df)[0]
-    probas = model.predict_proba(input_df)[0]
+    proba = model.predict_proba(input_df)[0]
 
-    if prediction == 1:
-        st.error("❌ Mahasiswa diprediksi **akan Dropout**.")
+    st.markdown("---")
+    st.subheader("📊 Hasil Prediksi")
+    if prediction == 0:
+        st.error("❌ Mahasiswa ini DIPREDIKSI AKAN DROPOUT.")
+        st.markdown(f"**Probabilitas Dropout:** `{proba[0]:.2f}`")
     else:
-        st.success("✅ Mahasiswa diprediksi **tidak akan Dropout**.")
+        st.success("✅ Mahasiswa ini DIPREDIKSI TIDAK AKAN DROPOUT.")
+        st.markdown(f"**Probabilitas Tidak Dropout:** `{proba[1]:.2f}`")
 
-    st.markdown(f"**Probabilitas Dropout:** `{probas[1]*100:.2f}%`")
+    st.markdown("---")
+    st.subheader("📄 Data yang Diberikan:")
+    st.dataframe(input_df)
